@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "blackblock-topper",
+  "version": "${version}",
+
+  "name": "Blackblock Topper",
+  "description": "Extra blocks & items that don't fit anywhere else!",
+  "authors": [
+    "Jelle De Loecker"
+  ],
+  "contact": {
+    "homepage": "https://blackblock.rocks/",
+    "sources": "https://github.com/skerit/blackblock-extra"
+  },
+
+  "license": "LGPL",
+  "icon": "assets/modid/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "rocks.blackblock.topper.BlackBlockTopper"
+    ]
+  },
+  "mixins": [
+    "blackblock-topper.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.14.0",
+    "fabric": "*",
+    "minecraft": ">1.19",
+    "java": ">=17",
+    "blackblock": ">=0.4.0"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
