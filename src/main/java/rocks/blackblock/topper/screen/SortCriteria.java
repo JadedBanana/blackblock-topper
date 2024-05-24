@@ -28,7 +28,7 @@ public enum SortCriteria implements StringIdentifiable {
 
     // Store all values in order
     public static final SortCriteria[] values = new SortCriteria[]{
-        DEFAULT, ALPHABETICAL, OWNER, MINED, BROKEN, CRAFTED, USED, PICKED_UP, DROPPED
+        DEFAULT, ALPHABETICAL, OWNER, MINED, CRAFTED, USED, BROKEN, PICKED_UP, DROPPED
     };
 
     private final String name;
@@ -43,6 +43,7 @@ public enum SortCriteria implements StringIdentifiable {
     public IconTexture getIcon() { return this.icon; }
 
     public SortCriteria next() { return values[(Arrays.asList(values).indexOf(this) + 1) % values.length]; }
+    public SortCriteria prev() { return values[(Arrays.asList(values).indexOf(this) + values.length - 1) % values.length]; }
 
     public void sort(List<Item> items, SortOrder sortOrder, ServerPlayerEntity player) {
         // Alphabet sort
@@ -52,21 +53,15 @@ public enum SortCriteria implements StringIdentifiable {
         // Mined stat, being the only block stat, gets its own special part.
         } else if (this == SortCriteria.MINED) {
             items.sort(Comparator.comparing(item ->
-                item instanceof BlockItem blockItem ? player.getStatHandler().getStat(Stats.MINED, blockItem.getBlock()) : -1
+                item instanceof BlockItem blockItem ? -player.getStatHandler().getStat(Stats.MINED, blockItem.getBlock()) : 1
             ));
-            if (sortOrder == SortOrder.DESCENDING)
-                Collections.reverse(items);
-            return;
 
         // For all other stats, attempt to sort by the stat.
         } else if (this.statType != null) {
-            items.sort(Comparator.comparing(item -> player.getStatHandler().getStat(this.statType, item)));
-            if (sortOrder == SortOrder.DESCENDING)
-                Collections.reverse(items);
-            return;
+            items.sort(Comparator.comparing(item -> -player.getStatHandler().getStat(this.statType, item)));
         }
 
-        // Final reversal for those who don't have alternate reversals.
+        // Final reversal if we're doing ascending.
         if (sortOrder == SortOrder.ASCENDING)
             Collections.reverse(items);
     }

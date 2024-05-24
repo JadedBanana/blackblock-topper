@@ -6,16 +6,13 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import rocks.blackblock.screenbuilder.BBSB;
 import rocks.blackblock.screenbuilder.ScreenBuilder;
-import rocks.blackblock.screenbuilder.inputs.EmptyInput;
-import rocks.blackblock.screenbuilder.interfaces.WidgetDataProvider;
+import rocks.blackblock.screenbuilder.interfaces.SlotEventListener;
 import rocks.blackblock.screenbuilder.slots.ButtonWidgetSlot;
-import rocks.blackblock.screenbuilder.widgets.PaginationWidget;
 import rocks.blackblock.topper.BlackBlockTopper;
 import rocks.blackblock.topper.screen.ItemBrowsingScreen;
 import rocks.blackblock.topper.screen.SortCriteria;
 import rocks.blackblock.topper.screen.SortOrder;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -96,7 +93,7 @@ public class CreativeScreen extends ItemBrowsingScreen {
      * @since    0.1.0
      */
     private void addTabButton(ScreenBuilder sb, int button_index, CreativeTab tab) {
-
+        // Add tab button.
         ButtonWidgetSlot tab_button = sb.addButton(button_index);
         tab_button.setTitle(tab.asString());
         if (selected_tab == tab)
@@ -105,11 +102,14 @@ public class CreativeScreen extends ItemBrowsingScreen {
             tab_button.setBackgroundType(ButtonWidgetSlot.BackgroundType.TOP_TAB_UNSELECTED);
         tab_button.addOverlay(tab.getIcon());
 
-        tab_button.addLeftClickListener((screen, slot) -> {
-            this.selected_tab = tab;
-            this.page = 1;
+        // Set up tab button listeners. All 3 buttons have the same function.
+        SlotEventListener listener = (screen, slot) -> {
+            this.selected_tab = tab; this.page = 1;
             screen.replaceScreen(this);
-        });
+        };
+        tab_button.addLeftClickListener(listener);
+        tab_button.addRightClickListener(listener);
+        tab_button.addMiddleClickListener(listener);
     }
 
     /**
@@ -127,11 +127,16 @@ public class CreativeScreen extends ItemBrowsingScreen {
         if (this.sort_criteria.getIcon() != null)
             criteria_button.addOverlay(this.sort_criteria.getIcon());
 
-        // Set criteria button behavior.
-        criteria_button.addLeftClickListener((screen, slot) -> {
+        // Set criteria button behavior. Middle click and left click have the same function.
+        SlotEventListener left_click_criteria_behavior = (screen, slot) -> {
             do { this.sort_criteria = sort_criteria.next(); } while (!this.selected_tab.getAllowedSortCriteria().contains(this.sort_criteria));
-            this.page = 1;
-            screen.replaceScreen(this);
+            this.page = 1; screen.replaceScreen(this);
+        };
+        criteria_button.addLeftClickListener(left_click_criteria_behavior);
+        criteria_button.addMiddleClickListener(left_click_criteria_behavior);
+        criteria_button.addRightClickListener((screen, slot) -> {
+            do { this.sort_criteria = sort_criteria.prev(); } while (!this.selected_tab.getAllowedSortCriteria().contains(this.sort_criteria));
+            this.page = 1; screen.replaceScreen(this);
         });
 
         // Add order button.
@@ -140,11 +145,16 @@ public class CreativeScreen extends ItemBrowsingScreen {
         order_button.setBackgroundType(ButtonWidgetSlot.BackgroundType.SMALL);
         order_button.addOverlay(this.sort_order.getIcon());
 
-        // Set order button behavior.
-        order_button.addLeftClickListener((screen, slot) -> {
+        // Set order button behavior. Middle click and left click have the same function.
+        SlotEventListener left_click_order_behavior = (screen, slot) -> {
             this.sort_order = sort_order.next();
-            this.page = 1;
-            screen.replaceScreen(this);
+            this.page = 1; screen.replaceScreen(this);
+        };
+        order_button.addLeftClickListener(left_click_order_behavior);
+        order_button.addMiddleClickListener(left_click_order_behavior);
+        order_button.addRightClickListener((screen, slot) -> {
+            this.sort_order = sort_order.prev();
+            this.page = 1; screen.replaceScreen(this);
         });
     }
 
@@ -208,7 +218,7 @@ public class CreativeScreen extends ItemBrowsingScreen {
             ButtonWidgetSlot button = sb.addButton(i + 9);
             button.setStack(stack);
 
-            // Set up listener to actually give the player the stack.
+            // Add listener to left click.
             button.addLeftClickListener((screen, slot) -> {
                 // If player clicks on tile with an item in hand already, delete it.
                 ItemStack old_stack = screen.getCursorStack();
@@ -221,6 +231,34 @@ public class CreativeScreen extends ItemBrowsingScreen {
                 ItemStack new_stack = stack.copy();
                 if (screen.isPressingShift())
                     new_stack.setCount(new_stack.getMaxCount());
+                screen.setCursorStack(new_stack);
+            });
+
+            // Add listener to right click.
+            button.addRightClickListener((screen, slot) -> {
+                // If player clicks on tile with an item in hand already, decrease its count by 1.
+                ItemStack old_stack = screen.getCursorStack();
+                if (old_stack != null && !old_stack.isEmpty()) {
+                    old_stack.decrement(1);
+                    return;
+                }
+
+                // Give them the new stack.
+                ItemStack new_stack = stack.copy();
+                if (screen.isPressingShift())
+                    new_stack.setCount(new_stack.getMaxCount());
+                screen.setCursorStack(new_stack);
+            });
+
+            // Add listener to middle click.
+            button.addMiddleClickListener((screen, slot) -> {
+                // If player clicks on tile with an item in hand already, return.
+                ItemStack old_stack = screen.getCursorStack();
+                if (old_stack != null && !old_stack.isEmpty()) return;
+
+                // Give them the new stack with the max count already there.
+                ItemStack new_stack = stack.copy();
+                new_stack.setCount(new_stack.getMaxCount());
                 screen.setCursorStack(new_stack);
             });
         }

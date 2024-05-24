@@ -24,5 +24,6 @@ public enum SortOrder implements StringIdentifiable {
     public String asString() { return this.name; }
     public IconTexture getIcon() { return this.icon; }
     public SortOrder next() { return values[(Arrays.asList(values).indexOf(this) + 1) % values.length]; }
+    public SortOrder prev() { return values[(Arrays.asList(values).indexOf(this) + values.length - 1) % values.length]; }
 
 }
