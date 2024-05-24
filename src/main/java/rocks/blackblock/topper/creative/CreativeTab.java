@@ -3,6 +3,10 @@ package rocks.blackblock.topper.creative;
 import net.minecraft.util.StringIdentifiable;
 import rocks.blackblock.screenbuilder.BBSB;
 import rocks.blackblock.screenbuilder.textures.IconTexture;
+import rocks.blackblock.topper.screen.SortCriteria;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 public enum CreativeTab implements StringIdentifiable {
 
@@ -22,5 +26,8 @@ public enum CreativeTab implements StringIdentifiable {
     public String toString() { return this.asString(); }
     public String asString() { return this.name; }
     public IconTexture getIcon() { return this.icon; }
+    public Collection<SortCriteria> getAllowedSortCriteria() { return Arrays.stream(new SortCriteria[]{
+            SortCriteria.DEFAULT, SortCriteria.ALPHABETICAL, SortCriteria.MINED, SortCriteria.BROKEN, SortCriteria.CRAFTED, SortCriteria.USED, SortCriteria.PICKED_UP, SortCriteria.DROPPED
+    }).toList(); }
 
 }

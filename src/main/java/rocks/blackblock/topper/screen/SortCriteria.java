@@ -18,6 +18,7 @@ public enum SortCriteria implements StringIdentifiable {
 
     DEFAULT("Default", null, null),
     ALPHABETICAL("Alphabetical", BBSB.SORT_ALPHABETICAL, null),
+    OWNER("Owner", BBSB.SORT_OWNER, null),
     MINED("Times Mined", BBSB.SORT_MINED, null),
     BROKEN("Times Broken", BBSB.SORT_BROKEN, Stats.BROKEN),
     CRAFTED("Times Crafted", BBSB.SORT_CRAFTED, Stats.CRAFTED),
@@ -27,7 +28,7 @@ public enum SortCriteria implements StringIdentifiable {
 
     // Store all values in order
     public static final SortCriteria[] values = new SortCriteria[]{
-        DEFAULT, ALPHABETICAL, MINED, BROKEN, CRAFTED, USED, PICKED_UP, DROPPED
+        DEFAULT, ALPHABETICAL, OWNER, MINED, BROKEN, CRAFTED, USED, PICKED_UP, DROPPED
     };
 
     private final String name;

@@ -21,6 +21,6 @@ These custom blocks & items do not require a modded client, anyone can join than
 
 ## Authors
 - **Jelle De Loecker** -  *Follow* me on *Github* ([:octocat:@skerit](https://github.com/skerit)) and on  *Twitter* ([🐦@skeriten](http://twitter.com/intent/user?screen_name=skeriten))
-- **Jade Godwin** -  *Follow* me on *Github* ([:octocat:@jadedbanana](https://github.com/jadedbanana))! I don't have a Twitter.
+- **Jade Godwin** -  *Follow* me on *Github* ([:v:@jadedbanana](https://github.com/jadedbanana))! I don't have a Twitter.
 
 See also the list of [contributors](https://github.com/skerit/blackblock-extra/contributors) who participated in this project.

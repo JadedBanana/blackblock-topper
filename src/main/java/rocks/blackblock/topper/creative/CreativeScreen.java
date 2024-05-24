@@ -10,6 +10,8 @@ import rocks.blackblock.screenbuilder.inputs.EmptyInput;
 import rocks.blackblock.screenbuilder.interfaces.WidgetDataProvider;
 import rocks.blackblock.screenbuilder.slots.ButtonWidgetSlot;
 import rocks.blackblock.screenbuilder.widgets.PaginationWidget;
+import rocks.blackblock.topper.BlackBlockTopper;
+import rocks.blackblock.topper.screen.ItemBrowsingScreen;
 import rocks.blackblock.topper.screen.SortCriteria;
 import rocks.blackblock.topper.screen.SortOrder;
 
@@ -23,19 +25,15 @@ import java.util.*;
  * @author  Jade Godwin         <icanhasabanana@gmail.com>
  * @since    0.1.0
  */
-public class CreativeScreen extends EmptyInput implements WidgetDataProvider {
+public class CreativeScreen extends ItemBrowsingScreen {
 
     private static boolean INITIALIZED = false;
-    private static List<Item> all_items = null;
 
-    public static final TreeMap<Integer, Item> CREATIVE_ITEMS = new TreeMap<>();
     public static final HashMap<CreativeTab, ArrayList<Item>> TAB_FILTERS = new HashMap<>();
 
-    private ServerPlayerEntity player;
     private CreativeTab selected_tab = CreativeTab.ALL;
     private SortCriteria sort_criteria = SortCriteria.DEFAULT;
     private SortOrder sort_order = SortOrder.DESCENDING;
-    private int page = 1;
 
     public CreativeScreen(ServerPlayerEntity player) {
         super();
@@ -72,18 +70,18 @@ public class CreativeScreen extends EmptyInput implements WidgetDataProvider {
      */
     private List<Item> getItems() {
         // If all items does not yet exist, make it.
-        if (all_items == null)
-            all_items = CREATIVE_ITEMS.values().stream().toList();
+        if (BlackBlockTopper.CREATIVE_ITEMS_FLATTENED == null)
+            BlackBlockTopper.CREATIVE_ITEMS_FLATTENED = BlackBlockTopper.CREATIVE_ITEMS.values().stream().toList();
 
         // If we're on the all tab, just return all items.
         ArrayList<Item> returned_items = new ArrayList<>();
         if (selected_tab == CreativeTab.ALL) {
-            returned_items.addAll(all_items);
+            returned_items.addAll(BlackBlockTopper.CREATIVE_ITEMS_FLATTENED);
 
         // Otherwise, filter based on the tab.
         } else {
             ArrayList<Item> filter = TAB_FILTERS.get(selected_tab);
-            all_items.forEach(item -> { if (filter.contains(item)) { returned_items.add(item); } });
+            BlackBlockTopper.CREATIVE_ITEMS_FLATTENED.forEach(item -> { if (filter.contains(item)) { returned_items.add(item); } });
         }
 
         // Implement sort criteria & return.
@@ -131,7 +129,7 @@ public class CreativeScreen extends EmptyInput implements WidgetDataProvider {
 
         // Set criteria button behavior.
         criteria_button.addLeftClickListener((screen, slot) -> {
-            this.sort_criteria = sort_criteria.next();
+            do { this.sort_criteria = sort_criteria.next(); } while (!this.selected_tab.getAllowedSortCriteria().contains(this.sort_criteria));
             this.page = 1;
             screen.replaceScreen(this);
         });
@@ -160,11 +158,10 @@ public class CreativeScreen extends EmptyInput implements WidgetDataProvider {
      */
     @Override
     public ScreenBuilder getScreenBuilder() {
+        // Initialize screen.
         ScreenBuilder sb = this.createBasicScreenBuilder("creative_input");
         sb.useFontTexture(new Identifier("blackblock", "gui/bb_creative"));
         sb.setCloneSlots(false);
-
-        // Set display name.
         this.setDisplayName("Blackblock Creative");
 
         // Add tab buttons.
@@ -180,36 +177,39 @@ public class CreativeScreen extends EmptyInput implements WidgetDataProvider {
         // Add sort buttons.
         this.addSortButtons(sb, 45);
 
+        // Add items.
+        this.addItems(sb);
+        return sb;
+    }
+
+    /**
+     * Add the items to the screen!
+     *
+     * @author  Jade Godwin         <icanhasabanana@gmail.com>
+     * @since    0.1.1
+     */
+    private void addItems(ScreenBuilder sb) {
         // Get selected items.
         List<Item> all_selected_items = this.getItems();
 
         // Get page slot info.
         int slots_per_page = 36;
-        int page = this.page;
         int item_count = all_selected_items.size();
-        int max_page_value = (int) Math.ceil(item_count / (double) slots_per_page);
-        int start = (page - 1) * slots_per_page;
+        int start = (this.page - 1) * slots_per_page;
         int end = Math.min(start + slots_per_page, item_count);
-
-        // If page exceeds max page count, go back.
-        if (page > max_page_value) {
-            page = max_page_value;
-            this.page = page;
-        }
 
         // Get subset of items.
         List<Item> items = all_selected_items.subList(start, end);
 
         // Fill the screen's slots.
         for (int i = 0; i < items.size(); i++) {
+            // Create button stack.
             ItemStack stack = new ItemStack(items.get(i));
-
             ButtonWidgetSlot button = sb.addButton(i + 9);
             button.setStack(stack);
 
             // Set up listener to actually give the player the stack.
             button.addLeftClickListener((screen, slot) -> {
-
                 // If player clicks on tile with an item in hand already, delete it.
                 ItemStack old_stack = screen.getCursorStack();
                 if (old_stack != null && !old_stack.isEmpty()) {
@@ -225,33 +225,8 @@ public class CreativeScreen extends EmptyInput implements WidgetDataProvider {
             });
         }
 
-        // Set up pagination.
-        PaginationWidget pagination = new PaginationWidget();
-        pagination.setId("pagination");
-        pagination.setSlotIndex(50);
-        pagination.setMaxValue(max_page_value);
-
-        // On a page change, replace the whole screen.
-        int current_page = page;
-        pagination.setOnChangeListener((texturedScreenHandler, widget) -> {
-            if (current_page == this.page) { return; }
-            texturedScreenHandler.replaceScreen(this);
-        });
-
-        // Add paginator and return.
-        sb.addWidget(pagination);
-        return sb;
-    }
-
-    @Override
-    public Object getWidgetValue(String widget_id) {
-        if (widget_id.equals("pagination")) { return this.page; }
-        return null;
-    }
-
-    @Override
-    public void setWidgetValue(String widget_id, Object value) {
-        if (widget_id.equals("pagination")) { this.page = (int) value; }
+        // Add pagination!
+        this.setUpPagination(sb, (int) Math.ceil(item_count / (double) slots_per_page));
     }
 
     /**
