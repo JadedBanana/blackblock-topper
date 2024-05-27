@@ -4,6 +4,7 @@
   "package": "rocks.blackblock.topper.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
+    "ServerStatHandlerMixin"
   ],
   "client": [],
   "injectors": {
