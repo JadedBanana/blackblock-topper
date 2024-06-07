@@ -56,6 +56,9 @@ public class CreativeScreen extends ItemBrowsingScreen {
         TAB_FILTERS.put(CreativeTab.FOOD, new ArrayList<>());
         TAB_FILTERS.put(CreativeTab.MINIGAME_ITEMS, new ArrayList<>());
         TAB_FILTERS.put(CreativeTab.OTHER_ITEMS, new ArrayList<>());
+
+        // Register screen.
+        CreativeScreen.registerScreen();
     }
 
     /**

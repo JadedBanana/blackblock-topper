@@ -14,6 +14,7 @@ import rocks.blackblock.topper.creative.CreativeScreen;
 import rocks.blackblock.topper.creative.CreativeTab;
 import rocks.blackblock.topper.server.Commands;
 import rocks.blackblock.topper.statistics.CustomStatisticsComponent;
+import rocks.blackblock.topper.statistics.StatisticsScreen;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -59,7 +60,7 @@ public class BlackBlockTopper implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        // Initialize the maps that need data filled out
+        // Initialize screens
         CreativeScreen.initialize();
 
         // Get each topper entrypoint and have them register their info
@@ -71,6 +72,7 @@ public class BlackBlockTopper implements ModInitializer {
         // Register screens
         if (FabricLoader.getInstance().isModLoaded("polymc")) {
             CreativeScreen.registerScreen();
+            StatisticsScreen.registerScreen();
         }
 
         // Register commands
