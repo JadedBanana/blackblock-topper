@@ -257,7 +257,7 @@ public class StatisticsScreen extends ItemBrowsingScreen {
      */
     @Override
     public ScreenBuilder getScreenBuilder() {
-        ScreenBuilder sb = this.createBasicScreenBuilder("creative_input");
+        ScreenBuilder sb = this.createBasicScreenBuilder("statistics_input");
         sb.useFontTexture(new Identifier("blackblock", "gui/bb_stats"));
         sb.setCloneSlots(false);
 
@@ -400,7 +400,7 @@ public class StatisticsScreen extends ItemBrowsingScreen {
      */
     public static ScreenBuilder registerScreen() {
         ScreenBuilder sb = new ScreenBuilder("creative_input");
-        sb.useFontTexture(new Identifier("blackblock", "gui/bb_creative"));
+        sb.useFontTexture(new Identifier("blackblock", "gui/bb_stats"));
         return sb;
     }
 

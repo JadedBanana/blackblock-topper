@@ -73,6 +73,7 @@ public class BlackBlockTopper implements ModInitializer {
         // Register screens
         if (FabricLoader.getInstance().isModLoaded("polymc")) {
             CreativeScreen.registerScreen();
+            StatisticsScreen.registerScreen();
         }
 
         // Register commands
