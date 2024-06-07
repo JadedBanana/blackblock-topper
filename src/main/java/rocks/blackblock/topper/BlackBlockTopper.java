@@ -14,6 +14,7 @@ import rocks.blackblock.topper.creative.CreativeScreen;
 import rocks.blackblock.topper.creative.CreativeTab;
 import rocks.blackblock.topper.server.Commands;
 import rocks.blackblock.topper.statistics.CustomStatisticsComponent;
+import rocks.blackblock.topper.statistics.StatisticsScreen;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -59,8 +60,9 @@ public class BlackBlockTopper implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        // Initialize the maps that need data filled out
+        // Initialize and register screens
         CreativeScreen.initialize();
+        StatisticsScreen.registerScreen();
 
         // Get each topper entrypoint and have them register their info
         List<TopperEntrypoint> entrypoints = FabricLoader.getInstance().getEntrypoints("blackblock-topper", TopperEntrypoint.class);

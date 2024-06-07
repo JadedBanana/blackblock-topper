@@ -7,6 +7,8 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.stat.Stat;
+import net.minecraft.stat.StatFormatter;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
@@ -37,6 +39,7 @@ public class StatisticsScreen extends ItemBrowsingScreen {
     private StatisticsTab selected_tab = StatisticsTab.GENERAL;
     private SortCriteria sort_criteria = SortCriteria.DEFAULT;
     private SortOrder sort_order = SortOrder.DESCENDING;
+    private boolean hide_empty_stats = false;
 
     public StatisticsScreen(ServerPlayerEntity player) {
         super();
@@ -54,10 +57,28 @@ public class StatisticsScreen extends ItemBrowsingScreen {
         // If all items does not yet exist, make it.
         if (BlackBlockTopper.CREATIVE_ITEMS_FLATTENED == null)
             BlackBlockTopper.CREATIVE_ITEMS_FLATTENED = BlackBlockTopper.CREATIVE_ITEMS.values().stream().toList();
+        ArrayList<Item> returned_items = new ArrayList<>();
+
+        // If we're hiding empty stats, we need to only add on the ones that don't have 0's in AT LEAST one stat.
+        if (hide_empty_stats) {
+            BlackBlockTopper.CREATIVE_ITEMS_FLATTENED.forEach(item -> {
+                if (!(
+                        (!(item instanceof BlockItem blockItem) || player.getStatHandler().getStat(Stats.MINED.getOrCreateStat(blockItem.getBlock())) == 0) &&
+                        player.getStatHandler().getStat(Stats.CRAFTED.getOrCreateStat(item)) == 0 &&
+                        player.getStatHandler().getStat(Stats.USED.getOrCreateStat(item)) == 0 &&
+                        player.getStatHandler().getStat(Stats.BROKEN.getOrCreateStat(item)) == 0 &&
+                        player.getStatHandler().getStat(Stats.PICKED_UP.getOrCreateStat(item)) == 0 &&
+                        player.getStatHandler().getStat(Stats.DROPPED.getOrCreateStat(item)) == 0)
+                ) {
+                    returned_items.add(item);
+                }
+            });
+        }
 
         // Copy all items over.
-        ArrayList<Item> returned_items = new ArrayList<>();
-        returned_items.addAll(BlackBlockTopper.CREATIVE_ITEMS_FLATTENED);
+        else {
+            returned_items.addAll(BlackBlockTopper.CREATIVE_ITEMS_FLATTENED);
+        }
 
         // Implement sort criteria & return.
         this.sort_criteria.sort(returned_items, this.sort_order, this.player);
@@ -76,12 +97,18 @@ public class StatisticsScreen extends ItemBrowsingScreen {
         // Create item stacks from mod-level statistics.
         List<ItemStack> mod_stacks = new ArrayList<>();
         BlackBlockTopper.STAT_ITEMS.forEach((id, item) -> {
-            // Instantiate item stack.
-            ItemStack stack = new ItemStack(item);
+            // Get stat & formatter. Skip if stat is 0 and we're hiding empty stats.
+            StatFormatter formatter = BlackBlockCore.STAT_FORMATS.get(id).getFormatter();
+            int stat = player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(id, formatter));
+            if (!(hide_empty_stats && stat == 0)) {
 
-            // Give the stack the appropriate name (translatable) and value, then put into list.
-            stack.setCustomName(Text.translatable("stat." + id.toTranslationKey()).append(Text.literal(": ").append(Text.literal(String.valueOf(player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(id, BlackBlockCore.STAT_FORMATS.get(id).getFormatter())))).formatted(Formatting.WHITE))).setStyle(Style.EMPTY.withColor(Formatting.YELLOW).withItalic(false)));
-            mod_stacks.add(stack);
+                // Instantiate item stack.
+                ItemStack stack = new ItemStack(item);
+
+                // Give the stack the appropriate name (translatable) and value, then put into list.
+                stack.setCustomName(Text.translatable("stat." + id.toTranslationKey()).append(Text.literal(": ").append(Text.literal(formatter.format(stat)).formatted(Formatting.WHITE))).setStyle(Style.EMPTY.withColor(Formatting.YELLOW).withItalic(false)));
+                mod_stacks.add(stack);
+            }
         });
 
         // If sort criteria is default, do an alphabetical sort NOW.
@@ -90,13 +117,16 @@ public class StatisticsScreen extends ItemBrowsingScreen {
         // Create item stacks from mod-level statistics.
         List<ItemStack> custom_stacks = new ArrayList<>();
         CustomStatisticsComponent.getInstance().getCustomStatistics().forEach(customStatistic -> {
-            // Instantiate item stack.
-            ItemStack stack = customStatistic.getDisplayItem().copy();
+            // Skip if stat is 0 and we're hiding empty stats.
+            if (!(hide_empty_stats && customStatistic.getScore(player.getName().getString()) == 0)) {
+                // Instantiate item stack.
+                ItemStack stack = customStatistic.getDisplayItem().copy();
 
-            // Give the stack the appropriate name and value, put the owner in the lore and NBT, then put into list.
-            stack.setCustomName(Text.literal(customStatistic.getDisplayName()).append(Text.literal(": ").append(Text.literal(String.valueOf(customStatistic.getFormattedScore(player.getName().getString()))).formatted(Formatting.WHITE))).setStyle(Style.EMPTY.withColor(Formatting.YELLOW).withItalic(false)));
-            stack.setSubNbt("custom_stat_owner", NbtString.of(customStatistic.getOwner()));
-            custom_stacks.add(stack);
+                // Give the stack the appropriate name and value, put the owner in the lore and NBT, then put into list.
+                stack.setCustomName(Text.literal(customStatistic.getDisplayName()).append(Text.literal(": ").append(Text.literal(String.valueOf(customStatistic.getFormattedScore(player.getName().getString()))).formatted(Formatting.WHITE))).setStyle(Style.EMPTY.withColor(Formatting.YELLOW).withItalic(false)));
+                stack.setSubNbt("custom_stat_owner", NbtString.of(customStatistic.getOwner()));
+                custom_stacks.add(stack);
+            }
         });
 
         // If sort criteria is default, do an alphabetical THEN an owner sort NOW.
@@ -142,6 +172,33 @@ public class StatisticsScreen extends ItemBrowsingScreen {
         tab_button.addLeftClickListener(listener);
         tab_button.addRightClickListener(listener);
         tab_button.addMiddleClickListener(listener);
+    }
+
+    /**
+     * Add the button for hiding empty stats.
+     *
+     * @author  Jade Godwin         <icanhasabanana@gmail.com>
+     * @since    0.2.0
+     */
+    private void addHideEmptyButton(ScreenBuilder sb, int button_index) {
+        // Add button.
+        ButtonWidgetSlot hide_button = sb.addButton(button_index);
+        hide_button.setTitle("Hide Empty Stats");
+        hide_button.setBackgroundType(ButtonWidgetSlot.BackgroundType.SMALL);
+
+        // Add check if currently selected.
+        if (hide_empty_stats)
+            hide_button.addOverlay(BBSB.CHECK_ICON);
+
+        // Add click behavior.
+        SlotEventListener left_click_behavior = (screen, slot) -> {
+            this.hide_empty_stats = !this.hide_empty_stats;
+            screen.replaceScreen(this);
+        };
+        hide_button.addLeftClickListener(left_click_behavior);
+        hide_button.addMiddleClickListener(left_click_behavior);
+        hide_button.addRightClickListener(left_click_behavior);
+
     }
 
     /**
@@ -210,6 +267,9 @@ public class StatisticsScreen extends ItemBrowsingScreen {
         // Add tab buttons.
         this.addTabButton(sb, 0, StatisticsTab.GENERAL);
         this.addTabButton(sb, 9, StatisticsTab.ITEMS);
+
+        // Add hide empty button.
+        this.addHideEmptyButton(sb, 27);
 
         // Add sort buttons.
         this.addSortButtons(sb, 46);
