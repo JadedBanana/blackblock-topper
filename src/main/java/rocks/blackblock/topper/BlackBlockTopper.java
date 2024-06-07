@@ -60,9 +60,8 @@ public class BlackBlockTopper implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        // Initialize and register screens
+        // Initialize screens
         CreativeScreen.initialize();
-        StatisticsScreen.registerScreen();
 
         // Get each topper entrypoint and have them register their info
         List<TopperEntrypoint> entrypoints = FabricLoader.getInstance().getEntrypoints("blackblock-topper", TopperEntrypoint.class);
